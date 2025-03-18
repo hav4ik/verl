@@ -16,9 +16,11 @@ import os
 import logging
 import torch
 import numpy as np
+from peft import PeftModel
 from torch.distributed.fsdp.fully_sharded_data_parallel import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp.api import ShardingStrategy, ShardedStateDictConfig, StateDictType, FullStateDictConfig
 from torch.distributed.device_mesh import DeviceMesh
+from collections import OrderedDict
 
 from verl.third_party.vllm import LLM
 from verl.third_party.vllm import parallel_state as vllm_ps
@@ -83,7 +85,17 @@ class FSDPVLLMShardingManager(BaseShardingManager):
         torch.cuda.empty_cache()
 
         log_gpu_memory_usage('Before state_dict() in sharding manager memory', logger=logger)
-        params = self.module.state_dict()
+        
+        if isinstance(self.module._fsdp_wrapped_module, PeftModel):
+            # the model to sync weights to is a vLLM model (not a peft model), so we need to merge the adapters
+            with FSDP.summon_full_params(self.module):
+                self.module.merge_adapter()
+                params = self.module._fsdp_wrapped_module.base_model.model.state_dict()
+            # FIXME: use more rigorous way to filter out the adapter weights
+            params = OrderedDict((k.replace(".base_layer.", "."), v) for k, v in params.items() if not ".lora_" in k)
+        else:
+            params = self.module.state_dict()
+        
         log_gpu_memory_usage('After state_dict() in sharding manager memory', logger=logger)
         # Copy, not share memory
         load_format = 'hf' if self.full_params else 'dtensor'
@@ -100,6 +112,9 @@ class FSDPVLLMShardingManager(BaseShardingManager):
 
         log_gpu_memory_usage('After sync model weights in sharding manager', logger=logger)
 
+        if isinstance(self.module._fsdp_wrapped_module, PeftModel):
+            with FSDP.summon_full_params(self.module):
+                self.module.unmerge_adapter()
         del params
         log_gpu_memory_usage('After del state_dict and empty_cache in sharding manager', logger=logger)
 

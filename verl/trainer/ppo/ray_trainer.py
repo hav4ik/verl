@@ -284,6 +284,10 @@ class RayPPOTrainer(object):
         self.ray_worker_group_cls = ray_worker_group_cls
         self.validation_generations_logger = ValidationGenerationsLogger()
 
+        # if ref_in_actor is True, the reference policy will be actor without lora applied
+        self.ref_in_actor = config.actor_rollout_ref.model.get('lora_rank', 0) > 0
+        
+
         # define KL control
         if self.use_reference_policy:
             if config.algorithm.kl_ctrl.type == 'fixed':
@@ -666,7 +670,7 @@ class RayPPOTrainer(object):
             self.resource_pool_to_cls[resource_pool]['critic'] = critic_cls
 
         # create reference policy if needed
-        if self.use_reference_policy:
+        if self.use_reference_policy and not self.ref_in_actor:
             resource_pool = self.resource_pool_manager.get_resource_pool(Role.RefPolicy)
             ref_policy_cls = RayClassWithInitArgs(self.role_worker_mapping[Role.RefPolicy],
                                                   config=self.config.actor_rollout_ref,
@@ -698,7 +702,7 @@ class RayPPOTrainer(object):
             self.critic_wg = all_wg['critic']
             self.critic_wg.init_model()
 
-        if self.use_reference_policy:
+        if self.use_reference_policy and not self.ref_in_actor:
             self.ref_policy_wg = all_wg['ref']
             self.ref_policy_wg.init_model()
 
@@ -984,7 +988,10 @@ class RayPPOTrainer(object):
                     if self.use_reference_policy:
                         # compute reference log_prob
                         with _timer('ref', timing_raw):
-                            ref_log_prob = self.ref_policy_wg.compute_ref_log_prob(batch)
+                            if not self.ref_in_actor:
+                                ref_log_prob = self.ref_policy_wg.compute_ref_log_prob(batch)
+                            else:
+                                ref_log_prob = self.actor_rollout_wg.compute_ref_log_prob(batch)
                             batch = batch.union(ref_log_prob)
 
                     # compute values
