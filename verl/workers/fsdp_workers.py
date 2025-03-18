@@ -701,7 +701,12 @@ class CriticWorker(Worker):
                 'r': self.config.model.lora_rank,
                 'lora_alpha': self.config.model.lora_alpha,
                 'target_modules': convert_to_regular_types(self.config.model.target_modules),
-                'bias': "none"
+                'bias': "none",
+                'lora_bias': self.config.model.get('lora_bias', False),
+                'use_rslora': self.config.model.get('use_rslora', False),
+                'modules_to_save': convert_to_regular_types(self.config.model.get('modules_to_save', [])),
+                'init_lora_weights': self.config.model.get('init_lora_weights', True),
+                'use_dora': self.config.model.get('use_dora', False),
             }
             critic_module = get_peft_model(critic_module, LoraConfig(**lora_config))
                 
