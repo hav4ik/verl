@@ -583,7 +583,6 @@ class ActorRolloutRefWorker(Worker):
             offload_fsdp_model_to_cpu(self.actor_module_fsdp)
         torch.cuda.empty_cache()
         log_gpu_memory_usage('After compute_log_prob', logger=logger)
-        torch.cuda.empty_cache()
         return output
 
     @register(dispatch_mode=Dispatch.DP_COMPUTE_PROTO)
