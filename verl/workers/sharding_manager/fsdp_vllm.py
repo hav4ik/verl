@@ -90,12 +90,12 @@ class FSDPVLLMShardingManager(BaseShardingManager):
             # the model to sync weights to is a vLLM model (not a peft model), so we need to merge the adapters
             with FSDP.summon_full_params(self.module):
                 self.module.merge_adapter()
-                params = self.module._fsdp_wrapped_module.base_model.model.state_dict()
+            params = self.module._fsdp_wrapped_module.base_model.model.state_dict()
             # FIXME: use more rigorous way to filter out the adapter weights
             params = OrderedDict((k.replace(".base_layer.", "."), v) for k, v in params.items() if not ".lora_" in k)
         else:
             params = self.module.state_dict()
-        
+
         log_gpu_memory_usage('After state_dict() in sharding manager memory', logger=logger)
         # Copy, not share memory
         load_format = 'hf' if self.full_params else 'dtensor'
