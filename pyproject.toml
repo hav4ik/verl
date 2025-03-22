@@ -43,10 +43,10 @@ dependencies = [
     "pybind11",
     "pylatexenc",
     "ray>=2.10",
-    "tensordict<0.6",
+    "tensordict==0.6.0",
     "torchdata",
     "transformers",
-    "vllm>=0.7.3",
+    "vllm>=0.8.1",
     'wandb',
 ]
 

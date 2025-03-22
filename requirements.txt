@@ -14,8 +14,8 @@ pyarrow>=15.0.0
 pybind11
 pylatexenc
 ray[default]
-tensordict<0.6
+tensordict==0.6.0
 torchdata
 transformers
-vllm>=0.7.3
+vllm>=0.8.1
 wandb
