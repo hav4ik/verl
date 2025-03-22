@@ -209,10 +209,14 @@ class vLLMRollout(BaseRollout):
 
         # users can customize different sampling_params at different run
         with self.update_sampling_params(**kwargs):
+            print(f"Generating {len(vllm_inputs)} responses with vLLM")
+            tokenizer = self.inference_engine.get_tokenizer()
+            print("vllm input sample: ", tokenizer.decode(vllm_inputs[0]["prompt_token_ids"]))
             outputs = self.inference_engine.generate(
                 prompts=vllm_inputs,  # because we have already convert it to prompt token id
                 sampling_params=self.sampling_params,
-                use_tqdm=False)
+                use_tqdm=True)
+            print("vLLM output sample:", outputs[0].outputs[0].text)
 
             # TODO(sgm): disable logprob when recompute_log_prob is enable
             # if n = 1: (bs, response_length) ; if n > 1: (bs * n, response_length)

@@ -223,11 +223,12 @@ def is_correct_strict_box(pred: str,
         Tuple of (score, extracted_prediction)
     """
     # Extract the relevant part of the prediction
+    # Note: the longest answer in MATH-500 has 159 characters
     if pause_tokens_index is not None:
         assert len(pause_tokens_index) == 4
-        pred = pred[pause_tokens_index[-1] - 100:]
+        pred = pred[pause_tokens_index[-1] - 200:]
     else:
-        pred = pred[-100:]
+        pred = pred[-200:]
 
     # Extract and check the boxed answer
     boxed_pred = last_boxed_only_string(pred)
@@ -261,7 +262,7 @@ def verify(solution_str: str,
 
 def compute_score(solution_str: str,
                   ground_truth: str,
-                  strict_box_verify: bool = False,
+                  strict_box_verify: bool = True,
                   pause_tokens_index: Optional[list[int]] = None) -> float:
     """Compute the reward score for a solution.
     
