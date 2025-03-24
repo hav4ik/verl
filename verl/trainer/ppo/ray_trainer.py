@@ -919,8 +919,15 @@ class RayPPOTrainer(object):
                             batch = batch.union(reward_tensor)
 
                         # we combine with rule-based rm
-                        reward_tensor = self.reward_fn(batch)
+                        reward_results = self.reward_fn(batch, return_dict=True)
+                        reward_tensor = reward_results["reward_tensor"]
                         batch.batch['token_level_scores'] = reward_tensor
+                        metrics.update({
+                            "train/acc/mean": np.mean(reward_results["reward_extra_metrics"]["acc"]) if "acc" in reward_results["reward_extra_metrics"] and len(reward_results["reward_extra_metrics"]["acc"]) > 0 else 0,
+                            "train/genenration/mean_len": np.mean(reward_results["reward_extra_metrics"]["generation_len"]) if "generation_len" in reward_results["reward_extra_metrics"] and len(reward_results["reward_extra_metrics"]["generation_len"]) > 0 else 0,
+                            "train/generation/max_len": np.max(reward_results["reward_extra_metrics"]["generation_len"]) if "generation_len" in reward_results["reward_extra_metrics"] and len(reward_results["reward_extra_metrics"]["generation_len"]) > 0 else 0,
+                            "train/generation/min_len": np.min(reward_results["reward_extra_metrics"]["generation_len"]) if "generation_len" in reward_results["reward_extra_metrics"] and len(reward_results["reward_extra_metrics"]["generation_len"]) > 0 else 0,
+                        })
 
                         # compute rewards. apply_kl_penalty if available
                         if not self.config.actor_rollout_ref.actor.get('use_kl_loss', False):

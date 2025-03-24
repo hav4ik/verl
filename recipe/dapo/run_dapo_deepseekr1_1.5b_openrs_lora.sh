@@ -3,7 +3,7 @@ set -euxo pipefail
 export VLLM_USE_V1=1
 
 project_name='DAPO'
-exp_name='Deepseek-R1-1.5B-OpenRS-CoT4K-Lora-Cosine'
+exp_name='Deepseek-R1-1.5B-OpenRS-CoT4K-Lora-Cosine-Exp02'
 adv_estimator=grpo
 kl_coef=0.0
 kl_loss_coef=0.0
@@ -11,7 +11,7 @@ clip_ratio_low=0.2
 clip_ratio_high=0.28
 overlong_buffer_len=$((1024 * 5))
 use_token_level_loss=True
-enable_filter_groups=True
+enable_filter_groups=False
 
 # Ray
 RAY_ADDRESS=${RAY_ADDRESS:-"http://localhost:8265"}
@@ -27,12 +27,13 @@ TEST_FILE=${TEST_FILE:-"${RAY_DATA_HOME}/data/aime-2024-deepseek-prompt-x8.parqu
 
 # Algorithm
 ## Train
+learning_rate=5e-6
 max_prompt_length=$((512 * 1))
 max_response_length=$((1024 * 4))
 max_packed_length=$((1024 * 10))  # For sequence packing
-gen_prompt_bsz=36  # Should be equal to train_prompt_bsz if enable_filter_groups is False
-train_prompt_bsz=24  # Real batch size that will be picked for training (x n_resp_per_prompt)
-train_prompt_mini_bsz=12  # ppo mini batch size (real bs is this x n_resp_per_prompt)
+gen_prompt_bsz=32  # Should be equal to train_prompt_bsz if enable_filter_groups is False
+train_prompt_bsz=32  # Real batch size that will be picked for training (x n_resp_per_prompt)
+train_prompt_mini_bsz=16  # ppo mini batch size (real bs is this x n_resp_per_prompt)
 n_resp_per_prompt=6  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
 ## Validation
 val_top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
@@ -85,7 +86,7 @@ python3 -m verl.trainer.main_ppo \
     +actor_rollout_ref.model.override_config.resid_pdrop=0. \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
     +actor_rollout_ref.model.use_liger=True \
-    actor_rollout_ref.actor.optim.lr=2e-6 \
+    actor_rollout_ref.actor.optim.lr=${learning_rate} \
     actor_rollout_ref.actor.optim.lr_warmup_steps=0 \
     actor_rollout_ref.actor.optim.weight_decay=0.1 \
     actor_rollout_ref.actor.ppo_mini_batch_size=${train_prompt_mini_bsz} \
@@ -101,7 +102,7 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.rollout.max_num_batched_tokens=$((max_prompt_length + max_response_length)) \
     actor_rollout_ref.rollout.val_kwargs.top_k="${val_top_k}" \
     actor_rollout_ref.rollout.val_kwargs.top_p=0.95 \
-    actor_rollout_ref.rollout.val_kwargs.temperature=0.6 \
+    actor_rollout_ref.rollout.val_kwargs.temperature=1.0 \
     actor_rollout_ref.rollout.val_kwargs.n=1 \
     actor_rollout_ref.rollout.val_kwargs.do_sample=True \
     actor_rollout_ref.rollout.enforce_eager=False \

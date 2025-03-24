@@ -73,7 +73,7 @@ def cosine_scaled_reward(
                         nits=False,
                         malformed_operators=False,
                         basic_latex=True,
-                        equations=True,
+                        # equations=True,  # equations is deprecated, as it handled by the parser now
                         boxed=True,
                         units=True,
                     ),
@@ -209,6 +209,7 @@ class NaiveRewardManagerOpenRS:
 
         reward_tensor = torch.zeros_like(data.batch['responses'], dtype=torch.float32)
         reward_extra_info = defaultdict(list)
+        reward_extra_metrics = defaultdict(list)
 
         already_print_data_sources = {}
         per_item_vars = [dict() for _ in range(len(data))]  # each item in the batch has its own dict
@@ -270,6 +271,8 @@ class NaiveRewardManagerOpenRS:
                 if self.overlong_buffer_cfg.log:
                     reward_extra_info["overlong_reward"].append(overlong_reward)
                     reward_extra_info["overlong"].append(overlong_reward < 0)
+            reward_extra_metrics["acc"].append(result["acc"])
+            reward_extra_metrics["generation_len"].append(valid_response_length)
 
             reward_tensor[i, valid_response_length - 1] = final_reward
 
@@ -291,6 +294,7 @@ class NaiveRewardManagerOpenRS:
             return {
                 "reward_tensor": reward_tensor,
                 "reward_extra_info": reward_extra_info,
+                "reward_extra_metrics": reward_extra_metrics,
             }
         else:
             return reward_tensor

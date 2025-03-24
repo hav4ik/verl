@@ -209,7 +209,7 @@ class vLLMRollout(BaseRollout):
 
         # users can customize different sampling_params at different run
         with self.update_sampling_params(**kwargs):
-            print(f"Generating {len(vllm_inputs)} responses with vLLM")
+            print(f"Generating {len(vllm_inputs)} responses per rollout worker with vLLM")
             tokenizer = self.inference_engine.get_tokenizer()
             print("vllm input sample: ", tokenizer.decode(vllm_inputs[0]["prompt_token_ids"]))
             outputs = self.inference_engine.generate(
