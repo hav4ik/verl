@@ -67,6 +67,7 @@ python3 -m verl.trainer.main_ppo \
     algorithm.filter_groups.enable=${enable_filter_groups} \
     algorithm.filter_groups.fill_to_train_bsz=True \
     algorithm.filter_groups.drop_last_mini_batch=True \
+    algorithm.adv_scale_reward=False \
     actor_rollout_ref.model.use_remove_padding=True \
     actor_rollout_ref.actor.use_dynamic_bsz=${use_dynamic_bsz} \
     actor_rollout_ref.ref.log_prob_use_dynamic_bsz=${use_dynamic_bsz} \
