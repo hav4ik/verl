@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euxo pipefail
+export VLLM_USE_V1=1
 
 project_name='DAPO'
 exp_name='Deepseek-R1-1.5B-DAPO-CoT4K-LoRA'
