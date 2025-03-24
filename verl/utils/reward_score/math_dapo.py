@@ -18,7 +18,7 @@ import signal
 from typing import Optional
 
 
-def last_boxed_only_string(string: str) -> Optional[str]:
+def last_boxed_only_string(string: str, boxed_op="boxed"):
     """Extract the last LaTeX boxed expression from a string.
     
     Args:
@@ -27,7 +27,7 @@ def last_boxed_only_string(string: str) -> Optional[str]:
     Returns:
         The last boxed expression or None if not found
     """
-    idx = string.rfind("\\boxed{")
+    idx = string.rfind(f"\\{boxed_op}{{")
     if idx < 0:
         return None
 
@@ -45,10 +45,13 @@ def last_boxed_only_string(string: str) -> Optional[str]:
                 break
         i += 1
 
-    return string[idx:right_brace_idx + 1] if right_brace_idx is not None else None
+    if right_brace_idx is not None:
+        return string[idx:right_brace_idx + 1]
+    else:
+        return None
 
 
-def remove_boxed(s: str) -> str:
+def remove_boxed(s: str, boxed_op="boxed") -> str:
     """Remove the LaTeX boxed command from a string.
     
     Args:
@@ -57,9 +60,9 @@ def remove_boxed(s: str) -> str:
     Returns:
         The content inside the boxed command
     """
-    left = "\\boxed{"
-    assert s[:len(left)] == left, f"box error: {s}"
-    assert s[-1] == "}", f"box error: {s}"
+    left = f"\\{boxed_op}{{"
+    # assert s[:len(left)] == left, f"box error: {s}"
+    # assert s[-1] == "}", f"box error: {s}"
     return s[len(left):-1]
 
 
@@ -209,6 +212,31 @@ def is_correct_minerva(solution_str: str,
     return (pred == gt), pred
 
 
+def extract_boxed_text(text, boxed=True, framebox=True, answerxml=True):
+    patterns = []
+    if boxed:
+        extracted = last_boxed_only_string(text, "boxed")
+        if extracted:
+            return remove_boxed(extracted)
+    if framebox:
+        extracted = last_boxed_only_string(text, "framebox")
+        if extracted:
+            return remove_boxed(extracted)
+    if answerxml:
+        patterns.append(r'<answer>(.*?)</answer>')
+        pattern = "|".join(patterns)
+        matches = re.findall(pattern, text, re.DOTALL)
+        for match in matches[::-1]:
+            for group in match:
+                if group != "":
+                    return group
+    pattern = r'\d+'  # get the last integer if no pattern found
+    matches = re.findall(pattern, text, re.DOTALL)
+    if matches:
+        return matches[-1]
+    return ""
+
+
 def is_correct_strict_box(pred: str,
                           gt: str,
                           pause_tokens_index: Optional[list[int]] = None) -> tuple[int, Optional[str]]:
@@ -231,8 +259,7 @@ def is_correct_strict_box(pred: str,
         pred = pred[-200:]
 
     # Extract and check the boxed answer
-    boxed_pred = last_boxed_only_string(pred)
-    extracted_pred = remove_boxed(boxed_pred) if boxed_pred is not None else None
+    extracted_pred = extract_boxed_text(pred)
 
     return 1 if (extracted_pred == gt) else -1, extracted_pred
 
