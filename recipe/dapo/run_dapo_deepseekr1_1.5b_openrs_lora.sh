@@ -3,7 +3,7 @@ set -euxo pipefail
 export VLLM_USE_V1=1
 
 project_name='DAPO'
-exp_name='Deepseek-R1-1.5B-OpenRS-CoT4K-LoRA128'
+exp_name='Deepseek-R1-1.5B-OpenRS-CoT4K-Lora-Cosine'
 adv_estimator=grpo
 kl_coef=0.0
 kl_loss_coef=0.0
@@ -33,7 +33,7 @@ max_packed_length=$((1024 * 10))  # For sequence packing
 gen_prompt_bsz=32  # Should be equal to train_prompt_bsz if enable_filter_groups is False
 train_prompt_bsz=16  # Real batch size that will be picked for training (x n_resp_per_prompt)
 train_prompt_mini_bsz=8  # ppo mini batch size (real bs is this x n_resp_per_prompt)
-n_resp_per_prompt=8  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
+n_resp_per_prompt=6  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
 ## Validation
 val_top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
 
@@ -84,7 +84,7 @@ python3 -m verl.trainer.main_ppo \
     +actor_rollout_ref.model.override_config.resid_pdrop=0. \
     actor_rollout_ref.model.enable_gradient_checkpointing=True \
     +actor_rollout_ref.model.use_liger=True \
-    actor_rollout_ref.actor.optim.lr=1e-6 \
+    actor_rollout_ref.actor.optim.lr=2e-6 \
     actor_rollout_ref.actor.optim.lr_warmup_steps=0 \
     actor_rollout_ref.actor.optim.weight_decay=0.1 \
     actor_rollout_ref.actor.ppo_mini_batch_size=${train_prompt_mini_bsz} \
@@ -127,4 +127,5 @@ python3 -m verl.trainer.main_ppo \
     trainer.total_epochs=1 \
     trainer.default_local_dir="${CKPTS_DIR}" \
     trainer.resume_mode=auto \
-    trainer.critic_warmup=0
+    trainer.critic_warmup=0 \
+    reward_model.reward_manager=dapo_openrs

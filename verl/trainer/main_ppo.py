@@ -141,6 +141,10 @@ class TaskRunner:
         if reward_manager_name == 'naive':
             from verl.workers.reward_manager import NaiveRewardManager
             reward_manager_cls = NaiveRewardManager
+        elif reward_manager_name == 'dapo_openrs':
+            from verl.workers.reward_manager import NaiveRewardManagerOpenRS
+            reward_manager_cls = NaiveRewardManagerOpenRS
+            print("--- Using NaiveRewardManagerOpenRS ---")
         elif reward_manager_name == 'prime':
             from verl.workers.reward_manager import PrimeRewardManager
             reward_manager_cls = PrimeRewardManager
