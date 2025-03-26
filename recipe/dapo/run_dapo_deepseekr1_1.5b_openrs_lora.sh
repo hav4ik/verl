@@ -3,7 +3,7 @@ set -euxo pipefail
 export VLLM_USE_V1=1
 
 project_name='DAPO'
-exp_name='Deepseek-R1-1.5B-OpenRS-CoT4K-Lora-Cosine-Exp02'
+exp_name='Deepseek-R1-1.5B-OpenRS-CoT4K-DoRA-Cosine-Exp04'
 adv_estimator=grpo
 kl_coef=0.0
 kl_loss_coef=0.0
@@ -19,9 +19,10 @@ RUNTIME_ENV=${RUNTIME_ENV:-"./verl/trainer/runtime_env.yaml"}
 NNODES=${NNODES:-1}
 # Paths
 RAY_DATA_HOME=${RAY_DATA_HOME:-"/home/vu/data/verl"}
+MOUNTED_DATA_HOME=${MOUNTED_DATA_HOME:-"/mnt/data/verl"}
 # MODEL_PATH=${MODEL_PATH:-"${RAY_DATA_HOME}/models/Qwen2.5-32B"}
 MODEL_PATH="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-CKPTS_DIR=${CKPTS_DIR:-"${RAY_DATA_HOME}/ckpts/${project_name}/${exp_name}"}
+CKPTS_DIR=${CKPTS_DIR:-"${MOUNTED_DATA_HOME}/ckpts/${project_name}/${exp_name}"}
 TRAIN_FILE=${TRAIN_FILE:-"${RAY_DATA_HOME}/data/dapo_openrs7k_deepseek_prompt.parquet"}
 TEST_FILE=${TEST_FILE:-"${RAY_DATA_HOME}/data/aime-2024-deepseek-prompt-x8.parquet"}
 
@@ -30,7 +31,7 @@ TEST_FILE=${TEST_FILE:-"${RAY_DATA_HOME}/data/aime-2024-deepseek-prompt-x8.parqu
 learning_rate=5e-6
 max_prompt_length=$((512 * 1))
 max_response_length=$((1024 * 4))
-max_packed_length=$((1024 * 10))  # For sequence packing
+max_packed_length=$((1024 * 6))  # For sequence packing
 gen_prompt_bsz=32  # Should be equal to train_prompt_bsz if enable_filter_groups is False
 train_prompt_bsz=32  # Real batch size that will be picked for training (x n_resp_per_prompt)
 train_prompt_mini_bsz=16  # ppo mini batch size (real bs is this x n_resp_per_prompt)

@@ -19,9 +19,10 @@ RUNTIME_ENV=${RUNTIME_ENV:-"./verl/trainer/runtime_env.yaml"}
 NNODES=${NNODES:-1}
 # Paths
 RAY_DATA_HOME=${RAY_DATA_HOME:-"/home/vu/data/verl"}
+MOUNTED_DATA_HOME=${MOUNTED_DATA_HOME:-"/mnt/data/verl"}
 # MODEL_PATH=${MODEL_PATH:-"${RAY_DATA_HOME}/models/Qwen2.5-32B"}
 MODEL_PATH="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
-CKPTS_DIR=${CKPTS_DIR:-"${RAY_DATA_HOME}/ckpts/${project_name}/${exp_name}"}
+CKPTS_DIR=${CKPTS_DIR:-"${MOUNTED_DATA_HOME}/ckpts/${project_name}/${exp_name}"}
 TRAIN_FILE=${TRAIN_FILE:-"${RAY_DATA_HOME}/data/dapo_openrs7k_deepseek_prompt.parquet"}
 TEST_FILE=${TEST_FILE:-"${RAY_DATA_HOME}/data/aime-2024-deepseek-prompt-x8.parquet"}
 
@@ -96,7 +97,7 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.actor.grad_clip=1.0 \
     actor_rollout_ref.actor.use_token_level_loss=${use_token_level_loss} \
     actor_rollout_ref.actor.ulysses_sequence_parallel_size=${sp_size} \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.65 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.55 \
     actor_rollout_ref.rollout.tensor_model_parallel_size=${gen_tp} \
     actor_rollout_ref.rollout.enable_chunked_prefill=True \
     actor_rollout_ref.rollout.max_num_batched_tokens=$((max_prompt_length + max_response_length)) \
@@ -123,7 +124,7 @@ python3 -m verl.trainer.main_ppo \
     trainer.experiment_name="${exp_name}" \
     trainer.n_gpus_per_node=${n_gpus_per_node} \
     trainer.nnodes="${NNODES}" \
-    +trainer.val_before_train=False \
+    +trainer.val_before_train=True \
     trainer.test_freq=5 \
     trainer.save_freq=10 \
     trainer.total_epochs=1 \
