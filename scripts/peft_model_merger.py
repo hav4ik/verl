@@ -38,6 +38,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--local_dir', required=True, type = str, help="The path for your saved model")
     parser.add_argument("--hf_upload_path", default=False, type = str, help="The path of the huggingface repo to upload")
+    parser.add_argument("--output_dir", default=None, type = str, help="The output dir for the merged model")
     parser.add_argument("--lora_r", default=0, type = int, help="LoRA rank")
     parser.add_argument("--lora_alpha", default=1, type = int, help="LoRA alpha parameter")
     parser.add_argument("--lora_target_modules", default="all-linear", help="The target modules to merge")
@@ -167,7 +168,10 @@ if __name__ == '__main__':
 
     model.to_empty(device='cpu')
 
-    hf_path_to_save_to = os.path.join(local_dir, 'huggingface_unsharded')
+    if args.output_dir is None:
+        hf_path_to_save_to = os.path.join(local_dir, 'huggingface_unsharded')
+    else:
+        hf_path_to_save_to = args.output_dir
     os.makedirs(hf_path_to_save_to, exist_ok=True)
     print(f'Saving model to {hf_path_to_save_to}')
     if args.lora_r > 0:
