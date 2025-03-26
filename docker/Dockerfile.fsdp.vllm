@@ -9,11 +9,31 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone git repository
-RUN git clone https://github.com/hav4ik/verl.git . -b dapo-lora
-
-# Install the cloned repository in editable mode
-RUN pip install -e .[gpu,math]
+# Install Python libraries
+# Replace these with your specific required libraries
+RUN pip install --no-cache-dir \
+    accelerate \
+    codetiming \
+    datasets \
+    dill \
+    flash-attn \
+    hydra-core \
+    liger-kernel \
+    numpy \
+    pandas \
+    peft \
+    pyarrow>=15.0.0 \
+    pybind11 \
+    pylatexenc \
+    ray[default] \
+    tensordict==0.6.0 \
+    torchdata \
+    transformers \
+    vllm>=0.8.1 \
+    wandb \
+    liger-kernel \
+    flash-attn \
+    math-verify
 
 # Optional: Set default command
 CMD ["/bin/bash"]

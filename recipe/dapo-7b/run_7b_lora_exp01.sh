@@ -82,6 +82,7 @@ VLLM_USE_V1=1 python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.model.lora_rank=64 \
     actor_rollout_ref.model.lora_alpha=128 \
     +actor_rollout_ref.model.use_dora=False \
+    +actor_rollout_ref.model.use_rslora=True \
     actor_rollout_ref.model.target_modules=all-linear \
     +actor_rollout_ref.model.override_config.attention_dropout=0. \
     +actor_rollout_ref.model.override_config.embd_pdrop=0. \
