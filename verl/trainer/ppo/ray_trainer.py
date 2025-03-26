@@ -24,6 +24,7 @@ from enum import Enum
 from pprint import pprint
 from typing import Type, Dict
 from copy import deepcopy
+from tqdm import tqdm
 from collections import defaultdict
 from functools import partial
 
@@ -730,6 +731,8 @@ class RayPPOTrainer(object):
         # path: given_path + `/global_step_{global_steps}` + `/actor`
         local_global_step_folder = os.path.join(self.config.trainer.default_local_dir,
                                                 f'global_step_{self.global_steps}')
+
+        print(f'local_global_step_folder: {local_global_step_folder}')
         actor_local_path = os.path.join(local_global_step_folder, 'actor')
 
         actor_remote_path = None if self.config.trainer.default_hdfs_dir is None else os.path.join(
@@ -856,6 +859,9 @@ class RayPPOTrainer(object):
             logger.log(data=val_metrics, step=self.global_steps)
             if self.config.trainer.get('val_only', False):
                 return
+
+        # add tqdm
+        progress_bar = tqdm(total=self.total_training_steps, initial=self.global_steps, desc="Training Progress")
 
         # we start from step 1
         self.global_steps += 1
@@ -1069,6 +1075,8 @@ class RayPPOTrainer(object):
 
                 if is_last_step:
                     pprint(f'Final validation metrics: {last_val_metrics}')
+                    progress_bar.close()
                     return
 
+                progress_bar.update(1)
                 self.global_steps += 1
