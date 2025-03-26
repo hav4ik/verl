@@ -126,3 +126,6 @@ tests/e2e/toy_examples/deepspeed/synchronous/output.txt
 logs
 log
 outputs
+
+# local experimentation code
+notebooks
