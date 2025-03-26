@@ -16,6 +16,8 @@
 import re
 import signal
 from typing import Optional
+from latex2sympy2_extended import NormalizationConfig
+from math_verify import LatexExtractionConfig, parse as math_parse, verify as math_verify
 
 
 def last_boxed_only_string(string: str, boxed_op="boxed"):
@@ -212,7 +214,7 @@ def is_correct_minerva(solution_str: str,
     return (pred == gt), pred
 
 
-def extract_boxed_text(text, boxed=True, framebox=True, answerxml=True):
+def extract_boxed_text(text, boxed=True, framebox=True, answerxml=True, ret_last_int=False):
     patterns = []
     if boxed:
         extracted = last_boxed_only_string(text, "boxed")
@@ -230,11 +232,38 @@ def extract_boxed_text(text, boxed=True, framebox=True, answerxml=True):
             for group in match:
                 if group != "":
                     return group
-    pattern = r'\d+'  # get the last integer if no pattern found
-    matches = re.findall(pattern, text, re.DOTALL)
-    if matches:
-        return matches[-1]
+    if ret_last_int:
+        pattern = r'\d+'  # get the last integer if no pattern found
+        matches = re.findall(pattern, text, re.DOTALL)
+        if matches:
+            return matches[-1]
     return ""
+
+
+def is_correct_math_verify(pred: str, gt: str) -> bool:
+    gold_parsed = math_parse(str(gt), extraction_mode="first_match", extraction_config=[LatexExtractionConfig()])
+    answer_parsed = math_parse(
+        str(pred),
+        extraction_config=[
+            LatexExtractionConfig(
+                normalization_config=NormalizationConfig(
+                    nits=False,
+                    malformed_operators=False,
+                    basic_latex=True,
+                    # equations=True,  # equations is deprecated, as it handled by the parser now
+                    boxed=True,
+                    units=True,
+                ),
+                boxed_match_priority=0,
+                try_extract_without_anchor=False,
+            )
+        ],
+        extraction_mode="first_match",
+    )
+    answer_text = extract_boxed_text(pred)
+    is_correct_mv = math_verify(answer_parsed, gold_parsed) if len(gold_parsed) > 0 else False
+    is_correct_raw = math_verify(math_parse(answer_text), math_parse(str(gt)))
+    return is_correct_mv or is_correct_raw
 
 
 def is_correct_strict_box(pred: str,
@@ -260,8 +289,10 @@ def is_correct_strict_box(pred: str,
 
     # Extract and check the boxed answer
     extracted_pred = extract_boxed_text(pred)
-
-    return 1 if (extracted_pred == gt) else -1, extracted_pred
+    if extracted_pred == gt or is_correct_math_verify(pred, gt):
+        return 1, extracted_pred
+    else:
+        return -1, extracted_pred
 
 
 def verify(solution_str: str,

@@ -247,6 +247,7 @@ class ActorRolloutRefWorker(Worker):
                 }
                 print("LoRA config: ", lora_config)
                 actor_module = get_peft_model(actor_module, LoraConfig(**lora_config))
+                actor_module.to(torch_dtype)  # PEFT model is created in fp32, so we need to convert it to bf16
         torch.distributed.barrier()
 
         if self.rank == 0:

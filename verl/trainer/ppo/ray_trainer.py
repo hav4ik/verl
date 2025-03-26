@@ -930,7 +930,7 @@ class RayPPOTrainer(object):
                         batch.batch['token_level_scores'] = reward_tensor
                         if "reward_extra_metrics" in reward_results:
                             if "acc" in reward_results["reward_extra_metrics"] and len(reward_results["reward_extra_metrics"]["acc"]) > 0:
-                            metrics.update({"train/acc/mean": np.mean(reward_results["reward_extra_metrics"]["acc"])})
+                                metrics.update({"train/acc/mean": np.mean(reward_results["reward_extra_metrics"]["acc"])})
 
                         # compute rewards. apply_kl_penalty if available
                         if not self.config.actor_rollout_ref.actor.get('use_kl_loss', False):
