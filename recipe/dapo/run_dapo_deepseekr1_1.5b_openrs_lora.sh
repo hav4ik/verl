@@ -3,7 +3,7 @@ set -euxo pipefail
 export VLLM_USE_V1=1
 
 project_name='DAPO'
-exp_name='Deepseek-R1-1.5B-OpenRS-CoT4K-DoRA-Cosine-Exp04'
+exp_name='Deepseek-R1-1.5B-OpenRS-CoT4K-DoRA-Cosine-Exp04-Test'
 adv_estimator=grpo
 kl_coef=0.0
 kl_loss_coef=0.0
@@ -11,7 +11,7 @@ clip_ratio_low=0.2
 clip_ratio_high=0.28
 overlong_buffer_len=$((1024 * 5))
 use_token_level_loss=True
-enable_filter_groups=False
+enable_filter_groups=True
 
 # Ray
 RAY_ADDRESS=${RAY_ADDRESS:-"http://localhost:8265"}
@@ -28,13 +28,13 @@ TEST_FILE=${TEST_FILE:-"${RAY_DATA_HOME}/data/aime-2024-deepseek-prompt-x8.parqu
 
 # Algorithm
 ## Train
-learning_rate=5e-6
+learning_rate=2e-6
 max_prompt_length=$((512 * 1))
 max_response_length=$((1024 * 4))
-max_packed_length=$((1024 * 6))  # For sequence packing
+max_packed_length=$((1024 * 10))  # For sequence packing
 gen_prompt_bsz=32  # Should be equal to train_prompt_bsz if enable_filter_groups is False
-train_prompt_bsz=32  # Real batch size that will be picked for training (x n_resp_per_prompt)
-train_prompt_mini_bsz=16  # ppo mini batch size (real bs is this x n_resp_per_prompt)
+train_prompt_bsz=16  # Real batch size that will be picked for training (x n_resp_per_prompt)
+train_prompt_mini_bsz=8  # ppo mini batch size (real bs is this x n_resp_per_prompt)
 n_resp_per_prompt=6  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
 ## Validation
 val_top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
@@ -124,8 +124,8 @@ python3 -m verl.trainer.main_ppo \
     trainer.experiment_name="${exp_name}" \
     trainer.n_gpus_per_node=${n_gpus_per_node} \
     trainer.nnodes="${NNODES}" \
-    +trainer.val_before_train=True \
-    trainer.test_freq=5 \
+    +trainer.val_before_train=False \
+    trainer.test_freq=1 \
     trainer.save_freq=10 \
     trainer.total_epochs=1 \
     trainer.default_local_dir="${CKPTS_DIR}" \
