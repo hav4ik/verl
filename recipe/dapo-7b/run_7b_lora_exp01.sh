@@ -9,7 +9,8 @@ kl_coef=0.0
 kl_loss_coef=0.0
 clip_ratio_low=0.2
 clip_ratio_high=0.28
-overlong_buffer_len=$((1024 * 6))
+overlong_buffer_len=$((1024 * 1))
+overlong_buffer_enable=True
 use_token_level_loss=True
 enable_filter_groups=True
 
@@ -120,6 +121,7 @@ VLLM_USE_V1=1 python3 -m verl.trainer.main_ppo \
     +actor_rollout_ref.actor.fsdp_config.mixed_precision.reduce_dtype=bfloat16 \
     +actor_rollout_ref.actor.fsdp_config.mixed_precision.buffer_dtype=bfloat16 \
     +actor_rollout_ref.actor.fsdp_config.wrap_policy.transformer_layer_cls_to_wrap=[Qwen2DecoderLayer,Qwen2Attention,Qwen2MLP] \
+    custom_reward_function.overlong_buffer.enable=${overlong_buffer_enable} \
     custom_reward_function.overlong_buffer.len=${overlong_buffer_len} \
     custom_reward_function.overlong_buffer.penalty_factor=1.0 \
     trainer.logger=['console','wandb'] \
