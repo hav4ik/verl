@@ -2,14 +2,14 @@
 set -euxo pipefail
 export VLLM_USE_V1=1
 
-project_name='DAPO'
-exp_name='Deepseek-R1-1.5B-OpenRS-CoT4K-DoRA-Cosine-Exp04-Test'
+project_name='DAPO-7B'
+exp_name='sft7b-v6-dapo-lora-exp01'
 adv_estimator=grpo
 kl_coef=0.0
 kl_loss_coef=0.0
 clip_ratio_low=0.2
 clip_ratio_high=0.28
-overlong_buffer_len=$((1024 * 5))
+overlong_buffer_len=$((1024 * 6))
 use_token_level_loss=True
 enable_filter_groups=True
 
@@ -20,8 +20,7 @@ NNODES=${NNODES:-1}
 # Paths
 RAY_DATA_HOME=${RAY_DATA_HOME:-"/home/vu/data/verl"}
 MOUNTED_DATA_HOME=${MOUNTED_DATA_HOME:-"/mnt/data/verl"}
-# MODEL_PATH=${MODEL_PATH:-"${RAY_DATA_HOME}/models/Qwen2.5-32B"}
-MODEL_PATH="deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+MODEL_PATH=${MODEL_PATH:-"${RAY_DATA_HOME}/models/Qwen2.5-7B"}
 CKPTS_DIR=${CKPTS_DIR:-"${MOUNTED_DATA_HOME}/ckpts/${project_name}/${exp_name}"}
 TRAIN_FILE=${TRAIN_FILE:-"${RAY_DATA_HOME}/data/dapo_openrs7k_deepseek_prompt.parquet"}
 TEST_FILE=${TEST_FILE:-"${RAY_DATA_HOME}/data/aime-2024-deepseek-prompt-x8.parquet"}
@@ -30,13 +29,14 @@ TEST_FILE=${TEST_FILE:-"${RAY_DATA_HOME}/data/aime-2024-deepseek-prompt-x8.parqu
 ## Train
 learning_rate=2e-6
 max_prompt_length=$((512 * 1))
-max_response_length=$((1024 * 4))
-max_packed_length=$((1024 * 10))  # For sequence packing
-gen_prompt_bsz=32  # Should be equal to train_prompt_bsz if enable_filter_groups is False
-train_prompt_bsz=16  # Real batch size that will be picked for training (x n_resp_per_prompt)
-train_prompt_mini_bsz=8  # ppo mini batch size (real bs is this x n_resp_per_prompt)
-n_resp_per_prompt=6  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
-ppo_repeat_batch=2  # Perform K "epochs" of training on the same batch
+max_response_length=$((1024 * 6))
+max_packed_length=$((1024 * 32))  # For sequence packing
+gen_prompt_bsz=64  # Should be equal to train_prompt_bsz if enable_filter_groups is False
+train_prompt_bsz=32  # Real batch size that will be picked for training (x n_resp_per_prompt)
+train_prompt_mini_bsz=16  # ppo mini batch size (real bs is this x n_resp_per_prompt)
+n_resp_per_prompt=8  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
+ppo_repeat_batch=2  # Perform 2 "epochs" of training on the same batch
+rewards_manager=dapo_openrs  # wither naive (pure DAPO) or dapo_openrs (DAPO with format and Cosine length loss)
 ## Validation
 val_top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
 
@@ -52,7 +52,7 @@ gen_tp=1
 # ray job submit --no-wait --runtime-env="${RUNTIME_ENV}" \
 #     --working-dir "${PWD}" \
 #     -- python3 -m verl.trainer.main_ppo \
-python3 -m verl.trainer.main_ppo \
+VLLM_USE_V1=1 python3 -m verl.trainer.main_ppo \
     data.train_files="${TRAIN_FILE}" \
     data.val_files="${TEST_FILE}" \
     data.prompt_key=prompt \
@@ -99,7 +99,7 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.actor.grad_clip=1.0 \
     actor_rollout_ref.actor.use_token_level_loss=${use_token_level_loss} \
     actor_rollout_ref.actor.ulysses_sequence_parallel_size=${sp_size} \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.65 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.7 \
     actor_rollout_ref.rollout.tensor_model_parallel_size=${gen_tp} \
     actor_rollout_ref.rollout.enable_chunked_prefill=True \
     actor_rollout_ref.rollout.max_num_batched_tokens=$((max_prompt_length + max_response_length)) \
@@ -127,12 +127,12 @@ python3 -m verl.trainer.main_ppo \
     trainer.n_gpus_per_node=${n_gpus_per_node} \
     trainer.nnodes="${NNODES}" \
     +trainer.val_before_train=False \
-    trainer.test_freq=1 \
-    trainer.save_freq=10 \
+    trainer.test_freq=5 \
+    trainer.save_freq=5 \
+    trainer.max_actor_ckpt_to_keep=5 \
+    trainer.max_critic_ckpt_to_keep=5 \
     trainer.total_epochs=1 \
     trainer.default_local_dir="${CKPTS_DIR}" \
     trainer.resume_mode=auto \
     trainer.critic_warmup=0 \
-    trainer.max_actor_ckpt_to_keep=5 \
-    trainer.max_critic_ckpt_to_keep=5 \
-    reward_model.reward_manager=dapo_openrs
+    reward_model.reward_manager=${rewards_manager}
