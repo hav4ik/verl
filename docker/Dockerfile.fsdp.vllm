@@ -22,18 +22,21 @@ RUN pip install --no-cache-dir \
     numpy \
     pandas \
     peft \
-    pyarrow>=15.0.0 \
+    pyarrow==19.0.1 \
     pybind11 \
     pylatexenc \
     ray[default] \
     tensordict==0.6.0 \
     torchdata \
     transformers \
-    vllm>=0.8.1 \
+    vllm==0.8.1 \
     wandb \
     liger-kernel \
     flash-attn \
-    math-verify
+    math-verify \
+    kaggle \
+    jupyter \
+    jupyterlab
 
 # Optional: Set default command
 CMD ["/bin/bash"]
