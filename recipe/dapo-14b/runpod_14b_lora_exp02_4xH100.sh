@@ -3,7 +3,7 @@ set -euxo pipefail
 export VLLM_USE_V1=1
 
 project_name='DAPO-14B'
-exp_name='sft7b-v6-dapo-lora-exp01'
+exp_name='sft14b-v6-dapo-lora-exp02'
 adv_estimator=grpo
 kl_coef=0.0
 kl_loss_coef=0.0
@@ -31,11 +31,11 @@ TEST_FILE=${TEST_FILE:-"${KAGGLEHUB_CACHE}/datasets/chankhavu/aimo-grpo-train-da
 learning_rate=2e-6
 max_prompt_length=$((512 * 1))
 max_response_length=$((1024 * 8))
-max_packed_length=$((1024 * 16))  # For sequence packing
-gen_prompt_bsz=32  # Should be equal to train_prompt_bsz if enable_filter_groups is False
-train_prompt_bsz=24  # Real batch size that will be picked for training (x n_resp_per_prompt)
-train_prompt_mini_bsz=12  # ppo mini batch size (real bs is this x n_resp_per_prompt)
-n_resp_per_prompt=6  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
+max_packed_length=$((1024 * 64))  # For sequence packing
+gen_prompt_bsz=48  # Should be equal to train_prompt_bsz if enable_filter_groups is False
+train_prompt_bsz=32  # Real batch size that will be picked for training (x n_resp_per_prompt)
+train_prompt_mini_bsz=16  # ppo mini batch size (real bs is this x n_resp_per_prompt)
+n_resp_per_prompt=10  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
 ppo_repeat_batch=2  # Perform 2 "epochs" of training on the same batch
 rewards_manager=naive  # wither naive (pure DAPO) or dapo_openrs (DAPO with format and Cosine length loss)
 ## Validation
@@ -80,8 +80,8 @@ VLLM_USE_V1=1 python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.ref.log_prob_max_token_len_per_gpu=${infer_ppo_max_token_len} \
     actor_rollout_ref.rollout.log_prob_max_token_len_per_gpu=${infer_ppo_max_token_len} \
     actor_rollout_ref.model.path="${MODEL_PATH}" \
-    actor_rollout_ref.model.lora_rank=64 \
-    actor_rollout_ref.model.lora_alpha=128 \
+    actor_rollout_ref.model.lora_rank=128 \
+    actor_rollout_ref.model.lora_alpha=256 \
     +actor_rollout_ref.model.use_dora=False \
     +actor_rollout_ref.model.use_rslora=True \
     actor_rollout_ref.model.target_modules=all-linear \
