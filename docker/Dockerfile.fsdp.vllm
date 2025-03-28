@@ -4,9 +4,11 @@ FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-devel
 # Set up working directory
 WORKDIR /app
 
-# Install git and other dependencies
+# Install git, tmux, vim and other dependencies
 RUN apt-get update && apt-get install -y \
     git \
+    tmux \
+    vim \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python libraries
@@ -35,6 +37,8 @@ RUN pip install --no-cache-dir \
     flash-attn \
     math-verify \
     kaggle \
+    kagglehub \
+    flashinfer-python \
     jupyter \
     jupyterlab
 
