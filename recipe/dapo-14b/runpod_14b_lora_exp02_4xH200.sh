@@ -31,7 +31,7 @@ TEST_FILE=${TEST_FILE:-"${KAGGLEHUB_CACHE}/datasets/chankhavu/aimo-grpo-train-da
 learning_rate=2e-6
 max_prompt_length=$((512 * 1))
 max_response_length=$((1024 * 8))
-max_packed_length=$((1024 * 64))  # For sequence packing
+max_packed_length=$((1024 * 48))  # For sequence packing
 gen_prompt_bsz=48  # Should be equal to train_prompt_bsz if enable_filter_groups is False
 train_prompt_bsz=32  # Real batch size that will be picked for training (x n_resp_per_prompt)
 train_prompt_mini_bsz=16  # ppo mini batch size (real bs is this x n_resp_per_prompt)
@@ -48,7 +48,7 @@ actor_ppo_max_token_len=$((max_prompt_length + max_response_length))
 infer_ppo_max_token_len=$((max_prompt_length + max_response_length))
 offload=True
 n_gpus_per_node=4
-gen_tp=2
+gen_tp=1
 
 # ray job submit --no-wait --runtime-env="${RUNTIME_ENV}" \
 #     --working-dir "${PWD}" \
@@ -101,7 +101,7 @@ VLLM_USE_V1=1 python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.actor.grad_clip=1.0 \
     actor_rollout_ref.actor.use_token_level_loss=${use_token_level_loss} \
     actor_rollout_ref.actor.ulysses_sequence_parallel_size=${sp_size} \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.6 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.85 \
     actor_rollout_ref.rollout.tensor_model_parallel_size=${gen_tp} \
     actor_rollout_ref.rollout.enable_chunked_prefill=True \
     actor_rollout_ref.rollout.max_num_batched_tokens=$((max_prompt_length + max_response_length)) \
