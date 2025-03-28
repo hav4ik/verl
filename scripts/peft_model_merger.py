@@ -43,6 +43,7 @@ if __name__ == '__main__':
     parser.add_argument("--lora_alpha", default=1, type = int, help="LoRA alpha parameter")
     parser.add_argument("--lora_target_modules", default="all-linear", help="The target modules to merge")
     parser.add_argument("--lora_bias", default="none", help="Lora bias")
+    parser.add_argument("--load_device", default=None, type = str, help="The device to load the model")
     args = parser.parse_args()
 
     assert not args.local_dir.endswith("huggingface"), "The local_dir should not end with huggingface"
@@ -153,20 +154,24 @@ if __name__ == '__main__':
     else:
         raise NotImplementedError(f'Unknown architecture {config["architectures"]}')
 
-    load_device = 'meta' if args.lora_r == 0 else 'cpu'
+    if args.load_device is not None:
+        load_device = args.load_device
+    else:
+        load_device = 'meta' if args.lora_r == 0 else 'cpu'
+
     with torch.device(load_device):
         model = auto_model.from_config(config, torch_dtype=torch.bfloat16)
         if args.lora_r > 0:
             lora_config = {
                 'task_type': TaskType.CAUSAL_LM,
-                'r': 64,
-                'lora_alpha': 128,
-                'target_modules': 'all-linear',
-                'bias': "none",
+                'r': args.lora_r,
+                'lora_alpha': args.lora_alpha,
+                'target_modules': args.lora_target_modules,
+                'bias': args.lora_bias,
             }
             model = get_peft_model(model, LoraConfig(**lora_config))
 
-    model.to_empty(device='cpu')
+    model.to_empty(device=load_device)
 
     if args.output_dir is None:
         hf_path_to_save_to = os.path.join(local_dir, 'huggingface_unsharded')
