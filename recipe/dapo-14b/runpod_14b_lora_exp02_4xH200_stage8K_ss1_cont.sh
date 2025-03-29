@@ -2,8 +2,8 @@
 set -euxo pipefail
 export VLLM_USE_V1=1
 
-project_name='DAPO-7B'
-exp_name='sft7b-v6-dapo16k-lora-exp08'
+project_name='DAPO-14B'
+exp_name='dapo-lora-exp02-branch1'
 adv_estimator=grpo
 kl_coef=0.0
 kl_loss_coef=0.0
@@ -11,6 +11,7 @@ clip_ratio_low=0.2
 clip_ratio_high=0.28
 overlong_buffer_len=$((1024 * 1))
 overlong_buffer_enable=True
+overlong_buffer_penalty=0.0
 use_token_level_loss=True
 enable_filter_groups=True
 
@@ -21,7 +22,7 @@ NNODES=${NNODES:-1}
 # Paths
 RAY_DATA_HOME=${RAY_DATA_HOME:-"/workspace"}
 KAGGLEHUB_CACHE=${KAGGLEHUB_CACHE:-"/workspace/kagglehub"}
-MODEL_PATH=${MODEL_PATH:-"${KAGGLEHUB_CACHE}/models/yeoyunsianggeremie/aimo-sft-7b/Transformers/default/6"}
+MODEL_PATH=${MODEL_PATH:-"${KAGGLEHUB_CACHE}/models/conjuring92/aimo-sft-14b/Transformers/default/6"}
 CKPTS_DIR=${CKPTS_DIR:-"${RAY_DATA_HOME}/ckpts/${project_name}/${exp_name}"}
 TRAIN_FILE=${TRAIN_FILE:-"${KAGGLEHUB_CACHE}/datasets/chankhavu/aimo-grpo-train-data-v00/versions/1/train-grpo-exp00-x10.parquet"}
 TEST_FILE=${TEST_FILE:-"${KAGGLEHUB_CACHE}/datasets/chankhavu/aimo-grpo-train-data-v00/versions/1/valid-40-probs-x8.parquet"}
@@ -30,14 +31,14 @@ TEST_FILE=${TEST_FILE:-"${KAGGLEHUB_CACHE}/datasets/chankhavu/aimo-grpo-train-da
 ## Train
 learning_rate=2e-6
 max_prompt_length=$((512 * 1))
-max_response_length=$((1024 * 20))
-max_packed_length=$((1024 * 32))  # For sequence packing
+max_response_length=$((1024 * 8))
+max_packed_length=$((1024 * 48))  # For sequence packing
 gen_prompt_bsz=48  # Should be equal to train_prompt_bsz if enable_filter_groups is False
 train_prompt_bsz=32  # Real batch size that will be picked for training (x n_resp_per_prompt)
-train_prompt_mini_bsz=8  # ppo mini batch size (real bs is this x n_resp_per_prompt)
-n_resp_per_prompt=8  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
+train_prompt_mini_bsz=16  # ppo mini batch size (real bs is this x n_resp_per_prompt)
+n_resp_per_prompt=10  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
 ppo_repeat_batch=2  # Perform 2 "epochs" of training on the same batch
-rewards_manager=dapo_openrs  # wither naive (pure DAPO) or dapo_openrs (DAPO with format and Cosine length loss)
+rewards_manager=naive  # wither naive (pure DAPO) or dapo_openrs (DAPO with format and Cosine length loss)
 ## Validation
 val_top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
 
@@ -48,7 +49,7 @@ actor_ppo_max_token_len=$((max_prompt_length + max_response_length))
 infer_ppo_max_token_len=$((max_prompt_length + max_response_length))
 offload=True
 n_gpus_per_node=4
-gen_tp=2
+gen_tp=1
 
 # ray job submit --no-wait --runtime-env="${RUNTIME_ENV}" \
 #     --working-dir "${PWD}" \
@@ -123,13 +124,13 @@ VLLM_USE_V1=1 python3 -m verl.trainer.main_ppo \
     +actor_rollout_ref.actor.fsdp_config.wrap_policy.transformer_layer_cls_to_wrap=[Qwen2DecoderLayer,Qwen2Attention,Qwen2MLP] \
     custom_reward_function.overlong_buffer.enable=${overlong_buffer_enable} \
     custom_reward_function.overlong_buffer.len=${overlong_buffer_len} \
-    custom_reward_function.overlong_buffer.penalty_factor=1.0 \
+    custom_reward_function.overlong_buffer.penalty_factor=${overlong_buffer_penalty} \
     trainer.logger=['console','wandb'] \
     trainer.project_name="${project_name}" \
     trainer.experiment_name="${exp_name}" \
     trainer.n_gpus_per_node=${n_gpus_per_node} \
     trainer.nnodes="${NNODES}" \
-    +trainer.val_before_train=False \
+    +trainer.val_before_train=True \
     trainer.test_freq=5 \
     trainer.save_freq=5 \
     trainer.total_epochs=1 \
