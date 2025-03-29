@@ -32,10 +32,10 @@ learning_rate=2e-6
 max_prompt_length=$((512 * 1))
 max_response_length=$((1024 * 16))
 max_packed_length=$((1024 * 52))  # For sequence packing
-gen_prompt_bsz=48  # Should be equal to train_prompt_bsz if enable_filter_groups is False
-train_prompt_bsz=32  # Real batch size that will be picked for training (x n_resp_per_prompt)
-train_prompt_mini_bsz=14  # ppo mini batch size (real bs is this x n_resp_per_prompt)
-n_resp_per_prompt=12  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
+gen_prompt_bsz=32  # Should be equal to train_prompt_bsz if enable_filter_groups is False
+train_prompt_bsz=24  # Real batch size that will be picked for training (x n_resp_per_prompt)
+train_prompt_mini_bsz=12  # ppo mini batch size (real bs is this x n_resp_per_prompt)
+n_resp_per_prompt=8  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
 ppo_repeat_batch=2  # Perform 2 "epochs" of training on the same batch
 rewards_manager=naive  # wither naive (pure DAPO) or dapo_openrs (DAPO with format and Cosine length loss)
 ## Validation
