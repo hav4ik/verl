@@ -11,7 +11,7 @@ clip_ratio_low=0.2
 clip_ratio_high=0.28
 overlong_buffer_len=$((1024 * 4))
 overlong_buffer_enable=True
-overlong_buffer_penalty=1.0
+overlong_buffer_penalty=0.0
 use_token_level_loss=True
 enable_filter_groups=True
 
@@ -38,7 +38,7 @@ train_prompt_bsz=24  # Real batch size that will be picked for training (x n_res
 train_prompt_mini_bsz=12  # ppo mini batch size (real bs is this x n_resp_per_prompt)
 n_resp_per_prompt=8  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
 ppo_repeat_batch=2  # Perform 2 "epochs" of training on the same batch
-rewards_manager=naive  # wither naive (pure DAPO) or dapo_openrs (DAPO with format and Cosine length loss)
+rewards_manager=dapo_openrs  # wither naive (pure DAPO) or dapo_openrs (DAPO with format and Cosine length loss)
 ## Validation
 val_top_k=-1 # 0 for HF rollout, -1 for vLLM rollout
 
