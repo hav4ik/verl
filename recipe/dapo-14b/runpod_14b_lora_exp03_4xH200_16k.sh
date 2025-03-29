@@ -3,7 +3,7 @@ set -euxo pipefail
 export VLLM_USE_V1=1
 
 project_name='DAPO-14B'
-exp_name='sft14b-v6-dapo-lora-exp02'
+exp_name='sft14b-v6-dapo-lora-exp03'
 adv_estimator=grpo
 kl_coef=0.0
 kl_loss_coef=0.0
