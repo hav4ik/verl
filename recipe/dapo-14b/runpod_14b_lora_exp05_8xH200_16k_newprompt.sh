@@ -22,7 +22,7 @@ NNODES=${NNODES:-1}
 # Paths
 RAY_DATA_HOME=${RAY_DATA_HOME:-"/workspace"}
 KAGGLEHUB_CACHE=${KAGGLEHUB_CACHE:-"/workspace/kagglehub"}
-MODEL_PATH=${MODEL_PATH:-"${KAGGLEHUB_CACHE}/models/chankhavu/aimo-sft-14b-v13-grpo-step20/Transformers/bf16"}
+MODEL_PATH=${MODEL_PATH:-"${KAGGLEHUB_CACHE}/models/chankhavu/aimo-sft-14b-v13-grpo-step20/Transformers/bf16/1"}
 CKPTS_DIR=${CKPTS_DIR:-"${RAY_DATA_HOME}/ckpts/${project_name}/${exp_name}"}
 TRAIN_FILE=${TRAIN_FILE:-"${KAGGLEHUB_CACHE}/datasets/chankhavu/verl-train-grpo-newprompt-2/versions/1/verl-train-v02-x10-newprompt.parquet"}
 TEST_FILE=${TEST_FILE:-"${KAGGLEHUB_CACHE}/datasets/chankhavu/verl-train-grpo-newprompt-2/versions/1/verl-valid-40-probs-x8-newprompt.parquet"}
