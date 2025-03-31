@@ -32,11 +32,11 @@ TEST_FILE=${TEST_FILE:-"${KAGGLEHUB_CACHE}/datasets/chankhavu/verl-train-grpo-ne
 learning_rate=1e-6
 max_prompt_length=$((512 * 1))
 max_response_length=$((1024 * 16))
-max_packed_length=$((1024 * 52))  # For sequence packing
-gen_prompt_bsz=36  # Should be equal to train_prompt_bsz if enable_filter_groups is False
-train_prompt_bsz=24  # Real batch size that will be picked for training (x n_resp_per_prompt)
-train_prompt_mini_bsz=12  # ppo mini batch size (real bs is this x n_resp_per_prompt)
-n_resp_per_prompt=8  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
+max_packed_length=$((1024 * 104))  # For sequence packing
+gen_prompt_bsz=64  # Should be equal to train_prompt_bsz if enable_filter_groups is False
+train_prompt_bsz=32  # Real batch size that will be picked for training (x n_resp_per_prompt)
+train_prompt_mini_bsz=16  # ppo mini batch size (real bs is this x n_resp_per_prompt)
+n_resp_per_prompt=12  # Real train prompt batch size = train_prompt_bsz * n_resp_per_prompt
 ppo_repeat_batch=2  # Perform 2 "epochs" of training on the same batch
 rewards_manager=naive  # wither naive (pure DAPO) or dapo_openrs (DAPO with format and Cosine length loss)
 ## Validation
@@ -102,7 +102,7 @@ VLLM_USE_V1=1 python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.actor.grad_clip=1.0 \
     actor_rollout_ref.actor.use_token_level_loss=${use_token_level_loss} \
     actor_rollout_ref.actor.ulysses_sequence_parallel_size=${sp_size} \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.75 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.80 \
     actor_rollout_ref.rollout.tensor_model_parallel_size=${gen_tp} \
     actor_rollout_ref.rollout.enable_chunked_prefill=True \
     actor_rollout_ref.rollout.max_num_batched_tokens=$((max_prompt_length + max_response_length)) \
